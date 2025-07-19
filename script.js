@@ -1,54 +1,36 @@
-async function loadUsernames() {
-  const response = await fetch('whitelist.json');
-  const usernames = await response.json();
-  updateList(usernames);
-}
+let usernames = [];
 
-function updateList(usernames) {
-  const list = document.getElementById('userList');
-  list.innerHTML = '';
+function updateList() {
+  const list = document.getElementById("userList");
+  list.innerHTML = "";
   usernames.forEach((name, index) => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      ${name}
-      <button onclick="deleteUsername(${index})">Delete</button>
-    `;
+    const li = document.createElement("li");
+    li.innerHTML = `${name} <button onclick="removeUsername(${index})">Delete</button>`;
     list.appendChild(li);
   });
 }
 
-async function addUsername() {
-  const input = document.getElementById('usernameInput');
-  const newName = input.value.trim();
-  if (!newName) return;
-  const response = await fetch('whitelist.json');
-  const usernames = await response.json();
-  if (usernames.includes(newName)) {
-    alert("Username already in list.");
-    return;
-  }
-  usernames.push(newName);
-  saveUsernames(usernames);
-  input.value = '';
+function addUsername() {
+  const input = document.getElementById("usernameInput");
+  const name = input.value.trim();
+  if (!name || usernames.includes(name)) return;
+  usernames.push(name);
+  input.value = "";
+  updateList();
+  sendUpdate();
 }
 
-async function deleteUsername(index) {
-  const response = await fetch('whitelist.json');
-  const usernames = await response.json();
+function removeUsername(index) {
   usernames.splice(index, 1);
-  saveUsernames(usernames);
+  updateList();
+  sendUpdate();
 }
 
-function saveUsernames(usernames) {
-  const blob = new Blob([JSON.stringify(usernames, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'whitelist.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  alert("Downloaded updated whitelist.json. Please upload it manually to GitHub.");
-  location.reload();
+function sendUpdate() {
+  fetch("YOUR_REPLIT_API_URL", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ usernames })
+  }).then(res => res.text())
+    .then(msg => console.log(msg));
 }
-
-loadUsernames();
